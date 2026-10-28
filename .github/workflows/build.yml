@@ -5,15 +5,18 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -23,29 +26,10 @@ jobs:
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
+          cache: true
 
-      - name: Save custom files
-        run: |
-          mkdir -p /tmp/custom/lib
-          mkdir -p /tmp/custom/android
-          cp pubspec.yaml /tmp/custom/pubspec.yaml
-          cp lib/main.dart /tmp/custom/lib/main.dart
-          cp android/app/src/main/AndroidManifest.xml /tmp/custom/android/AndroidManifest.xml
-
-      - name: Create Flutter project structure
-        run: |
-          cd /tmp
-          flutter create --project-name beauty_app --org com.yourname --platforms android temp_project
-          cd $GITHUB_WORKSPACE
-          rm -rf android
-          cp -r /tmp/temp_project/android ./android
-          cp /tmp/temp_project/analysis_options.yaml . 2>/dev/null || true
-
-      - name: Restore custom files
-        run: |
-          cp /tmp/custom/pubspec.yaml pubspec.yaml
-          cp /tmp/custom/lib/main.dart lib/main.dart
-          cp /tmp/custom/android/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+      - name: Create missing Android structure
+        run: flutter create --project-name beauty_app --org com.yourname --platforms android .
 
       - name: Install dependencies
         run: flutter pub get
