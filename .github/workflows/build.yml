@@ -9,49 +9,46 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Lấy code từ repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cài đặt Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cài đặt Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
           cache: true
 
-      - name: Build APK trong thư mục sạch
+      - name: Dọn dẹp và tạo mới cấu trúc dự án
         run: |
-          # 1. Tạo dự án Flutter mẫu hoàn chỉnh ở thư mục tạm
-          flutter create --project-name beauty_app --org com.yourname --platforms android /tmp/build_app
+          # 1. Lưu tạm 3 file quan trọng của bạn
+          mkdir -p /tmp/save
+          cp pubspec.yaml /tmp/save/
+          cp lib/main.dart /tmp/save/
+          cp android/app/src/main/AndroidManifest.xml /tmp/save/
           
-          # 2. Di chuyển vào thư mục mẫu đó
-          cd /tmp/build_app
+          # 2. Xóa các thư mục cũ có thể gây xung đột
+          rm -rf lib android pubspec.yaml test
           
-          # 3. Ghi đè pubspec.yaml của bạn
-          cp $GITHUB_WORKSPACE/pubspec.yaml ./pubspec.yaml
+          # 3. Dùng Flutter tạo lại cấu trúc chuẩn 100%
+          flutter create --project-name beauty_app --org com.yourname .
           
-          # 4. Ghi đè main.dart của bạn
-          rm -f lib/main.dart
-          cp $GITHUB_WORKSPACE/lib/main.dart ./lib/main.dart
+          # 4. Chép đè 3 file của bạn vào cấu trúc vừa tạo
+          cp /tmp/save/pubspec.yaml ./pubspec.yaml
+          cp /tmp/save/main.dart ./lib/main.dart
+          cp /tmp/save/AndroidManifest.xml ./android/app/src/main/AndroidManifest.xml
           
-          # 5. Ghi đè AndroidManifest.xml để xin quyền thư viện ảnh
-          cp $GITHUB_WORKSPACE/android/app/src/main/AndroidManifest.xml ./android/app/src/main/AndroidManifest.xml
-          
-          # 6. Tải dependencies và build
+          # 5. Build
           flutter pub get
           flutter build apk --debug
-          
-          # 7. Copy file APK về lại thư mục của GitHub để tải lên
-          mkdir -p $GITHUB_WORKSPACE/build/app/outputs/flutter-apk
-          cp build/app/outputs/flutter-apk/app-debug.apk $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/
 
-      - name: Tải lên APK
+      - name: Tải APK lên
         uses: actions/upload-artifact@v4
         with:
           name: beauty-app-apk
