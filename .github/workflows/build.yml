@@ -5,20 +5,17 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Setup Flutter
@@ -28,8 +25,20 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Create missing Android structure
-        run: flutter create --project-name beauty_app --org com.yourname --platforms android .
+      - name: Scaffold complete Flutter project structure
+        run: |
+          echo "Đang tạo cấu trúc Flutter chuẩn tại thư mục tạm..."
+          flutter create --project-name beauty_app --org com.yourname --platforms android /tmp/flutter_temp
+          
+          echo "Đang sao chép thư mục android và các file cấu hình vào repo..."
+          cp -r /tmp/flutter_temp/android ./
+          cp /tmp/flutter_temp/analysis_options.yaml ./
+          cp /tmp/flutter_temp/.metadata ./
+          
+          echo "Đang khôi phục các file tùy chỉnh từ repo..."
+          cp pubspec.yaml ./pubspec.yaml
+          mkdir -p lib
+          cp lib/main.dart ./lib/main.dart
 
       - name: Install dependencies
         run: flutter pub get
@@ -37,7 +46,7 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: beauty-app-apk
