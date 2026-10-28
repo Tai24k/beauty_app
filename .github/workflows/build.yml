@@ -25,30 +25,31 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Tạo cấu trúc Flutter hoàn chỉnh
+      - name: Tạo dự án Flutter hoàn chỉnh
         run: |
-          # Tạo một dự án Flutter mẫu trong thư mục tạm
-          flutter create --project-name beauty_app --org com.yourname --platforms android /tmp/flutter_temp
+          # Tạo dự án Flutter mới trong thư mục tạm
+          flutter create --project-name beauty_app --org com.yourname --platforms android /tmp/beauty_app
           
-          # Sao chép thư mục android chuẩn vào repo
-          rm -rf android
-          cp -r /tmp/flutter_temp/android ./
+          # Sao chép toàn bộ cấu trúc dự án vào repo làm việc
+          cp -r /tmp/beauty_app/android ./
+          cp -r /tmp/beauty_app/lib ./
+          cp -r /tmp/beauty_app/test ./
+          cp -r /tmp/beauty_app/.metadata ./
+          cp /tmp/beauty_app/analysis_options.yaml ./
           
-          # Sao chép các file cấu hình cần thiết khác
-          cp /tmp/flutter_temp/analysis_options.yaml ./
-          cp /tmp/flutter_temp/.metadata ./
-          
-          # Ghi đè các file tùy chỉnh của bạn
+          # Ghi đè hai tệp tùy chỉnh của bạn
           cp pubspec.yaml ./pubspec.yaml
-          mkdir -p lib
-          cp lib/main.dart ./lib/main.dart
-          mkdir -p android/app/src/main
-          cp android/app/src/main/AndroidManifest.xml ./android/app/src/main/AndroidManifest.xml
+          cp /tmp/beauty_app/lib/main.dart ./lib/main.dart  # (tạm thời giữ main.dart gốc)
+          
+          # Sao chép main.dart của bạn vào (nếu có)
+          if [ -f "lib/main_custom.dart" ]; then
+            cp lib/main_custom.dart ./lib/main.dart
+          fi
 
       - name: Cài đặt dependencies
         run: flutter pub get
 
-      - name: Build APK (chế độ debug để tránh lỗi signing)
+      - name: Build APK (chế độ debug)
         run: flutter build apk --debug
 
       - name: Tải lên APK
